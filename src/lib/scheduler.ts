@@ -1,6 +1,6 @@
 import { config } from "./config";
 import { fetchWeather } from "./openMeteo";
-import { fetchSingleSensor, fetchSensorGroup } from "./purpleAir";
+import { fetchSingleSensor, fetchSensorGroup, estimateCf1TenMinuteAvg } from "./purpleAir";
 import { purpleAirToAqi, pm25ToAqi } from "./aqi";
 import { generateMockAreaReadings, generateMockHistory, generateMockReading } from "./mockData";
 import * as cache from "./cache";
@@ -44,7 +44,7 @@ async function pollMySensor() {
   try {
     const reading = await fetchSingleSensor(mySensorIndex);
     const humidity = reading.humidity ?? 50;
-    const pm25 = reading.pm25Cf1 ?? reading.pm25 ?? 0;
+    const pm25 = estimateCf1TenMinuteAvg(reading);
     const aqi = purpleAirToAqi(pm25, humidity);
     cache.setMySensor({
       ...aqi,
@@ -85,7 +85,7 @@ async function pollArea() {
       .filter((r) => r.pm25 != null)
       .map((r) => {
         const humidity = r.humidity ?? 50;
-        const pm25 = r.pm25Cf1 ?? r.pm25 ?? 0;
+        const pm25 = estimateCf1TenMinuteAvg(r);
         const aqi = purpleAirToAqi(pm25, humidity);
         return { ...aqi, name: r.name, humidity: r.humidity, lastSeen: r.lastSeen };
       });
