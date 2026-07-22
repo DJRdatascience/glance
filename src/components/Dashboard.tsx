@@ -59,7 +59,6 @@ export default function Dashboard({ initialData }: { initialData: DashboardSnaps
               aqi={data.mySensor?.aqi ?? null}
               category={data.mySensor?.category ?? null}
               color={data.mySensor?.color ?? null}
-              pm25={data.mySensor?.correctedPm25 ?? null}
               updatedAt={data.updatedAt.mySensor}
               error={data.errors.mySensor}
             />

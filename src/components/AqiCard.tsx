@@ -4,7 +4,6 @@ interface AqiCardProps {
   aqi: number | null;
   category: string | null;
   color: string | null;
-  pm25: number | null;
   updatedAt: string | null;
   error?: string | null;
 }
@@ -15,7 +14,6 @@ export default function AqiCard({
   aqi,
   category,
   color,
-  pm25,
   updatedAt,
   error,
 }: AqiCardProps) {
@@ -27,17 +25,14 @@ export default function AqiCard({
       </div>
 
       {aqi != null ? (
-        <div className="flex items-center gap-10">
+        <div className="flex flex-col items-start gap-4">
           <div
-            className="flex h-40 w-40 shrink-0 items-center justify-center rounded-full text-6xl font-bold"
+            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full text-5xl font-bold"
             style={{ backgroundColor: color ?? "#666", color: "#111" }}
           >
             {aqi}
           </div>
-          <div>
-            <p className="text-4xl font-semibold">{category}</p>
-            {pm25 != null && <p className="mt-2 text-xl text-white/60">PM2.5: {pm25.toFixed(1)} µg/m³</p>}
-          </div>
+          <p className="text-3xl font-semibold leading-tight">{category}</p>
         </div>
       ) : (
         <p className="text-2xl text-white/50">{error ?? "Waiting for data…"}</p>
