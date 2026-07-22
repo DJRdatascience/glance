@@ -2,9 +2,11 @@ import { config } from "./config";
 import { fetchWeather } from "./openMeteo";
 import { fetchSingleSensor, fetchSensorGroup } from "./purpleAir";
 import { purpleAirToAqi, pm25ToAqi } from "./aqi";
+import { generateMockAreaReadings, generateMockHistory, generateMockReading } from "./mockData";
 import * as cache from "./cache";
 
 let started = false;
+let mySensorHistorySeeded = false;
 
 async function pollWeather() {
   try {
@@ -17,6 +19,25 @@ async function pollWeather() {
 }
 
 async function pollMySensor() {
+  if (config.mock.enabled) {
+    if (!mySensorHistorySeeded) {
+      const intervalMinutes = Math.max(1, config.intervals.mySensorMs / 60_000);
+      cache.setMySensorHistory(generateMockHistory(24, intervalMinutes));
+      mySensorHistorySeeded = true;
+    }
+
+    const reading = generateMockReading();
+    const aqi = purpleAirToAqi(reading.pm25, reading.humidity);
+    cache.setMySensor({
+      ...aqi,
+      name: reading.name,
+      humidity: reading.humidity,
+      lastSeen: reading.lastSeen,
+    });
+    cache.appendMySensorHistoryPoint({ time: new Date().toISOString(), ...aqi });
+    return;
+  }
+
   const { mySensorIndex } = config.purpleAir;
   if (!mySensorIndex) return;
 
@@ -31,6 +52,7 @@ async function pollMySensor() {
       humidity: reading.humidity,
       lastSeen: reading.lastSeen,
     });
+    cache.appendMySensorHistoryPoint({ time: new Date().toISOString(), ...aqi });
   } catch (err) {
     console.error("[scheduler] my-sensor poll failed", err);
     cache.setMySensorError(err instanceof Error ? err.message : "Unknown error");
@@ -38,6 +60,22 @@ async function pollMySensor() {
 }
 
 async function pollArea() {
+  if (config.mock.enabled) {
+    const readings = generateMockAreaReadings(3);
+    const sensors = readings.map((r) => {
+      const aqi = purpleAirToAqi(r.pm25, r.humidity);
+      return { ...aqi, name: r.name, humidity: r.humidity, lastSeen: r.lastSeen };
+    });
+    const avgCorrected = sensors.reduce((sum, s) => sum + s.correctedPm25, 0) / sensors.length;
+    const roundedAvg = Math.round(avgCorrected * 10) / 10;
+    cache.setArea({
+      average: { correctedPm25: roundedAvg, ...pm25ToAqi(roundedAvg) },
+      sensorCount: sensors.length,
+      sensors,
+    });
+    return;
+  }
+
   const { areaSensorIndexes } = config.purpleAir;
   if (areaSensorIndexes.length === 0) return;
 
@@ -72,6 +110,10 @@ export function startBackgroundJobs() {
   started = true;
 
   cache.loadSnapshot();
+
+  if (config.mock.enabled) {
+    console.log("[scheduler] MOCK_DATA enabled — PurpleAir API calls are disabled");
+  }
 
   void pollWeather();
   void pollMySensor();

@@ -37,4 +37,10 @@ export const config = {
     areaMs: parseNumber(process.env.AREA_POLL_INTERVAL_MINUTES, 45) * 60_000,
   },
   snapshotFilePath: process.env.SNAPSHOT_FILE_PATH ?? "data/snapshot.json",
+  mock: {
+    // When true, skip real PurpleAir API calls (weather still uses the free
+    // Open-Meteo API) and generate fake sensor readings/history instead.
+    // Useful while iterating on UI so we don't burn PurpleAir points.
+    enabled: process.env.MOCK_DATA === "true",
+  },
 };
