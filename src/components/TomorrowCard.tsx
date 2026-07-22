@@ -14,8 +14,11 @@ export default function TomorrowCard({ weather }: { weather: WeatherSnapshot | n
   });
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4">
-      <p className="text-xl text-white/60">Tomorrow · {label}</p>
+    <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+      <div>
+        <p className="text-xl text-white/50">Tomorrow</p>
+        <p className="text-2xl font-semibold text-white/80">{label}</p>
+      </div>
       <WeatherIcon icon={tomorrow.icon} isDay className="h-20 w-20" />
       <p className="text-xl text-white/70">{tomorrow.condition}</p>
       <p className="text-5xl font-semibold tracking-tight tabular-nums">
