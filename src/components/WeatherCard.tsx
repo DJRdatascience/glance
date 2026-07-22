@@ -14,9 +14,15 @@ export default function WeatherCard({ weather }: { weather: WeatherSnapshot | nu
   const tempRange = Math.max(...temps) - minTemp || 1;
   const sparkWidth = 600;
   const sparkHeight = 28;
+  // Nested SVGs clip to their viewBox by default, so keep the point dots
+  // (radius 2.5 + stroke) fully inside it — otherwise the peak/trough dots
+  // get flattened off at the top/bottom edge, right against the hourly
+  // temperatures above.
+  const sparkPadding = 4;
+  const sparkInnerHeight = sparkHeight - sparkPadding * 2;
   const sparkPoints = temps.map((t, i) => {
     const x = ((i + 0.5) / temps.length) * sparkWidth;
-    const y = sparkHeight - ((t - minTemp) / tempRange) * sparkHeight;
+    const y = sparkPadding + sparkInnerHeight - ((t - minTemp) / tempRange) * sparkInnerHeight;
     return { x, y };
   });
   const sparkPath = `M ${sparkPoints.map((p) => `${p.x},${p.y}`).join(" L ")}`;
