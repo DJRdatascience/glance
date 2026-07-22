@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import WeatherCard from "./WeatherCard";
+import TomorrowCard from "./TomorrowCard";
 import AqiCard from "./AqiCard";
 import AreaAqiMini from "./AreaAqiMini";
 import AqiHistoryChart from "./AqiHistoryChart";
@@ -48,6 +49,7 @@ export default function Dashboard({ initialData }: { initialData: DashboardSnaps
       <div className="relative z-10 flex h-full flex-col gap-10">
         <div className="flex items-start justify-between gap-8">
           <WeatherCard weather={data.weather} />
+          <TomorrowCard weather={data.weather} />
           <Clock timezone={data.weather?.location.timezone} />
         </div>
 
