@@ -8,7 +8,10 @@ export default function TomorrowCard({ weather }: { weather: WeatherSnapshot | n
     return null;
   }
 
-  const label = new Date(tomorrow.date).toLocaleDateString("en-US", { weekday: "long" });
+  const label = new Date(tomorrow.date).toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: "UTC",
+  });
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
