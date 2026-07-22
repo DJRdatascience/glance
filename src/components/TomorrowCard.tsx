@@ -11,7 +11,7 @@ export default function TomorrowCard({ weather }: { weather: WeatherSnapshot | n
   const label = new Date(tomorrow.date).toLocaleDateString("en-US", { weekday: "long" });
 
   return (
-    <div className="flex w-56 shrink-0 flex-col items-center gap-2 rounded-3xl bg-white/5 p-6 backdrop-blur">
+    <div className="flex h-full flex-col items-center justify-center gap-2">
       <p className="text-sm text-white/60">Tomorrow · {label}</p>
       <WeatherIcon icon={tomorrow.icon} isDay className="h-12 w-12" />
       <p className="text-lg text-white/70">{tomorrow.condition}</p>

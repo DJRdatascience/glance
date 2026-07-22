@@ -18,7 +18,7 @@ export default function AqiCard({
   error,
 }: AqiCardProps) {
   return (
-    <div className="flex flex-1 flex-col justify-center gap-6 rounded-3xl bg-white/5 p-10 backdrop-blur">
+    <div className="flex h-full flex-col justify-center gap-6">
       <div>
         <p className="text-xl text-white/60">{title}</p>
         {subtitle && <p className="text-sm text-white/40">{subtitle}</p>}

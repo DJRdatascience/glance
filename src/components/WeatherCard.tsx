@@ -3,18 +3,14 @@ import type { WeatherSnapshot } from "@/lib/openMeteo";
 
 export default function WeatherCard({ weather }: { weather: WeatherSnapshot | null }) {
   if (!weather) {
-    return (
-      <div className="flex-1 rounded-3xl bg-white/5 p-8 backdrop-blur">
-        <p className="text-white/60">Waiting for weather data…</p>
-      </div>
-    );
+    return <p className="text-white/60">Waiting for weather data…</p>;
   }
 
   const { current, daily, location } = weather;
   const today = daily[0];
 
   return (
-    <div className="flex flex-1 flex-col gap-6 rounded-3xl bg-white/5 p-8 backdrop-blur">
+    <div className="flex h-full flex-col gap-6">
       <div className="flex items-center justify-between gap-6">
         <div>
           <p className="text-lg text-white/60">{location.label}</p>
