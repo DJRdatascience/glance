@@ -126,11 +126,12 @@ export default function AqiHistoryChart({
         )}
       </div>
 
-      <svg
-        viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-        preserveAspectRatio="none"
-        className="w-full flex-1"
-      >
+      <div className="relative min-h-0 flex-1">
+        <svg
+          viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+          preserveAspectRatio="none"
+          className="h-full w-full"
+        >
         <defs>
           <linearGradient
             id={lineGradientId}
@@ -188,20 +189,27 @@ export default function AqiHistoryChart({
           opacity={0.1}
           strokeWidth={1}
         />
+        </svg>
 
-        {ticks.map((tick, i) => (
-          <text
-            key={i}
-            x={tick.x}
-            y={CHART_HEIGHT - 6}
-            fill="rgba(255,255,255,0.4)"
-            fontSize={11}
-            textAnchor={tick.anchor}
-          >
-            {tick.label}
-          </text>
-        ))}
-      </svg>
+        {/* Rendered as HTML rather than SVG <text> so labels don't get
+            non-uniformly stretched by the chart's preserveAspectRatio="none"
+            scaling. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6">
+          {ticks.map((tick, i) => (
+            <span
+              key={i}
+              className="absolute bottom-0 whitespace-nowrap text-sm text-white/40"
+              style={{
+                left: `${(tick.x / CHART_WIDTH) * 100}%`,
+                transform:
+                  tick.anchor === "start" ? "translateX(0)" : tick.anchor === "end" ? "translateX(-100%)" : "translateX(-50%)",
+              }}
+            >
+              {tick.label}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

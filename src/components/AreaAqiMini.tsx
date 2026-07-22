@@ -6,7 +6,7 @@ interface AreaAqiMiniProps {
   error?: string | null;
 }
 
-export default function AreaAqiMini({ sensorCount, aqi, category, color, error }: AreaAqiMiniProps) {
+export default function AreaAqiMini({ sensorCount, aqi, color, error }: AreaAqiMiniProps) {
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
@@ -22,7 +22,6 @@ export default function AreaAqiMini({ sensorCount, aqi, category, color, error }
           >
             {aqi}
           </span>
-          <span className="text-sm text-white/60">{category}</span>
         </div>
       ) : (
         <p className="text-sm text-white/40">{error ?? "Waiting…"}</p>

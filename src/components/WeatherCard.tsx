@@ -13,12 +13,12 @@ export default function WeatherCard({ weather }: { weather: WeatherSnapshot | nu
   const minTemp = Math.min(...temps);
   const tempRange = Math.max(...temps) - minTemp || 1;
   const sparkWidth = 600;
-  const sparkHeight = 28;
+  const sparkHeight = 56;
   // Nested SVGs clip to their viewBox by default, so keep the point dots
   // (radius 2.5 + stroke) fully inside it — otherwise the peak/trough dots
   // get flattened off at the top/bottom edge, right against the hourly
   // temperatures above.
-  const sparkPadding = 4;
+  const sparkPadding = 8;
   const sparkInnerHeight = sparkHeight - sparkPadding * 2;
   const sparkPoints = temps.map((t, i) => {
     const x = ((i + 0.5) / temps.length) * sparkWidth;
@@ -64,24 +64,39 @@ export default function WeatherCard({ weather }: { weather: WeatherSnapshot | nu
             </div>
           ))}
         </div>
-        <svg
-          viewBox={`0 0 ${sparkWidth} ${sparkHeight}`}
-          preserveAspectRatio="none"
-          className="mt-2 h-6 w-full"
-        >
-          <path
-            d={sparkPath}
-            fill="none"
-            stroke="white"
-            strokeOpacity={0.3}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <div className="relative mt-3 h-14 w-full">
+          <svg
+            viewBox={`0 0 ${sparkWidth} ${sparkHeight}`}
+            preserveAspectRatio="none"
+            className="h-full w-full"
+          >
+            <path
+              d={sparkPath}
+              fill="none"
+              stroke="white"
+              strokeOpacity={0.3}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+
+          {/* Rendered as HTML rather than SVG <circle> so the dots stay
+              perfectly round — preserveAspectRatio="none" scales x/y
+              independently, which would otherwise squash circles into
+              ovals. */}
           {sparkPoints.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r={2.5} fill="white" fillOpacity={0.5} />
+            <span
+              key={i}
+              className="absolute h-[5px] w-[5px] rounded-full bg-white/50"
+              style={{
+                left: `${(p.x / sparkWidth) * 100}%`,
+                top: `${(p.y / sparkHeight) * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            />
           ))}
-        </svg>
+        </div>
       </div>
     </div>
   );
