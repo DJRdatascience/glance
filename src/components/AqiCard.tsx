@@ -25,13 +25,12 @@ export default function AqiCard({ title, aqi, category, color, error }: AqiCardP
               {aqi}
             </div>
             <p className="text-3xl font-semibold leading-tight">{category}</p>
+            {description && <p className="text-lg text-white/50 leading-relaxed">{description}</p>}
           </div>
         ) : (
           <p className="text-2xl text-white/50">{error ?? "Waiting for data…"}</p>
         )}
       </div>
-
-      {description && <p className="text-center text-xl text-white/50 leading-relaxed">{description}</p>}
     </div>
   );
 }

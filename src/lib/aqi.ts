@@ -77,7 +77,7 @@ export const AQI_CATEGORY_DESCRIPTIONS: Record<string, string> = {
   "Unhealthy for Sensitive Groups":
     "Members of sensitive groups may experience health effects. The general public is less likely to be affected.",
   Unhealthy:
-    "Some members of the general public may experience health effects; sensitive groups may experience more serious effects.",
+    "Some people may experience health effects; sensitive groups may experience more serious effects.",
   "Very Unhealthy": "Health alert: the risk of health effects is increased for everyone.",
   Hazardous: "Health warning of emergency conditions: everyone is more likely to be affected.",
 };
