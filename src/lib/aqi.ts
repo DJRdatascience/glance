@@ -22,7 +22,7 @@ export function correctPm25(rawPm25Cf1: number, humidity: number): number {
   return 0.46 * pm + 0.0000393 * pm * pm + 2.97;
 }
 
-interface Breakpoint {
+export interface Breakpoint {
   concLow: number;
   concHigh: number;
   aqiLow: number;
@@ -32,7 +32,7 @@ interface Breakpoint {
 }
 
 // EPA PM2.5 AQI breakpoints (effective May 6, 2024).
-const BREAKPOINTS: Breakpoint[] = [
+export const AQI_BREAKPOINTS: Breakpoint[] = [
   { concLow: 0.0, concHigh: 9.0, aqiLow: 0, aqiHigh: 50, category: "Good", color: "#00e400" },
   { concLow: 9.1, concHigh: 35.4, aqiLow: 51, aqiHigh: 100, category: "Moderate", color: "#ffd400" },
   {
@@ -51,10 +51,10 @@ const BREAKPOINTS: Breakpoint[] = [
 
 export function pm25ToAqi(concentration: number): { aqi: number; category: string; color: string } {
   const c = Math.max(0, Math.round(concentration * 10) / 10);
-  const bp = BREAKPOINTS.find((b) => c <= b.concHigh);
+  const bp = AQI_BREAKPOINTS.find((b) => c <= b.concHigh);
 
   if (!bp) {
-    const last = BREAKPOINTS[BREAKPOINTS.length - 1];
+    const last = AQI_BREAKPOINTS[AQI_BREAKPOINTS.length - 1];
     return { aqi: 500, category: last.category, color: last.color };
   }
 
