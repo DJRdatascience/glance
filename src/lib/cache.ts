@@ -35,6 +35,10 @@ export interface DashboardSnapshot {
     mySensor: string | null;
     area: string | null;
   };
+  // Tracks whether this snapshot was written while MOCK_DATA was enabled, so
+  // we can detect a mode switch on the next load and avoid graphing synthetic
+  // and real readings together.
+  mockEnabled?: boolean;
 }
 
 const HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -77,12 +81,24 @@ function persist() {
 }
 
 export function loadSnapshot() {
+  let snapshot: DashboardSnapshot;
   try {
     const raw = fs.readFileSync(snapshotPath, "utf-8");
-    setSnapshotRef({ ...EMPTY_SNAPSHOT, ...JSON.parse(raw) });
+    snapshot = { ...EMPTY_SNAPSHOT, ...JSON.parse(raw) };
   } catch {
     // No snapshot on disk yet (first run) — keep defaults.
+    snapshot = { ...EMPTY_SNAPSHOT };
   }
+
+  // If MOCK_DATA has changed since this snapshot was last written, the
+  // accumulated history mixes synthetic and real readings — discard it
+  // rather than graphing them together.
+  if (snapshot.mockEnabled !== config.mock.enabled) {
+    snapshot.mySensorHistory = [];
+  }
+  snapshot.mockEnabled = config.mock.enabled;
+
+  setSnapshotRef(snapshot);
 }
 
 export function getSnapshot(): DashboardSnapshot {

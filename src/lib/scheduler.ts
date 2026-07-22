@@ -44,7 +44,7 @@ async function pollMySensor() {
   try {
     const reading = await fetchSingleSensor(mySensorIndex);
     const humidity = reading.humidity ?? 50;
-    const pm25 = reading.pm25_10min ?? reading.pm25 ?? 0;
+    const pm25 = reading.pm25Cf1 ?? reading.pm25 ?? 0;
     const aqi = purpleAirToAqi(pm25, humidity);
     cache.setMySensor({
       ...aqi,
@@ -85,7 +85,7 @@ async function pollArea() {
       .filter((r) => r.pm25 != null)
       .map((r) => {
         const humidity = r.humidity ?? 50;
-        const pm25 = r.pm25_10min ?? r.pm25 ?? 0;
+        const pm25 = r.pm25Cf1 ?? r.pm25 ?? 0;
         const aqi = purpleAirToAqi(pm25, humidity);
         return { ...aqi, name: r.name, humidity: r.humidity, lastSeen: r.lastSeen };
       });

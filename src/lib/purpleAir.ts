@@ -9,7 +9,7 @@ const FIELDS = [
   "longitude",
   "humidity",
   "pm2.5",
-  "pm2.5_10minute",
+  "pm2.5_cf_1",
   "last_seen",
 ];
 
@@ -20,7 +20,7 @@ export interface RawSensorReading {
   longitude: number;
   humidity: number | null;
   pm25: number | null;
-  pm25_10min: number | null;
+  pm25Cf1: number | null;
   lastSeen: number;
 }
 
@@ -34,7 +34,7 @@ function rowToReading(fields: string[], row: unknown[]): RawSensorReading {
   const get = (name: string) => row[fields.indexOf(name)];
   const humidity = get("humidity");
   const pm25 = get("pm2.5");
-  const pm25_10min = get("pm2.5_10minute");
+  const pm25Cf1 = get("pm2.5_cf_1");
   return {
     sensorIndex: Number(get("sensor_index")),
     name: String(get("name") ?? ""),
@@ -42,7 +42,7 @@ function rowToReading(fields: string[], row: unknown[]): RawSensorReading {
     longitude: Number(get("longitude")),
     humidity: humidity == null ? null : Number(humidity),
     pm25: pm25 == null ? null : Number(pm25),
-    pm25_10min: pm25_10min == null ? null : Number(pm25_10min),
+    pm25Cf1: pm25Cf1 == null ? null : Number(pm25Cf1),
     lastSeen: Number(get("last_seen")),
   };
 }
@@ -68,7 +68,7 @@ export async function fetchSingleSensor(sensorIndex: number): Promise<RawSensorR
     longitude: sensor.longitude,
     humidity: sensor.humidity ?? null,
     pm25: sensor["pm2.5"] ?? null,
-    pm25_10min: sensor["pm2.5_10minute"] ?? null,
+    pm25Cf1: sensor["pm2.5_cf_1"] ?? null,
     lastSeen: sensor.last_seen,
   };
 }

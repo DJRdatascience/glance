@@ -71,14 +71,26 @@ export default function AqiHistoryChart({
     }));
 
     const tickCount = Math.min(5, history.length);
-    const ticks = Array.from({ length: tickCount }, (_, i) => {
-      const idx = Math.round((i / (tickCount - 1 || 1)) * (history.length - 1));
-      const point = history[idx];
+    const tickIndexes = Array.from({ length: tickCount }, (_, i) =>
+      Math.round((i / (tickCount - 1 || 1)) * (history.length - 1))
+    );
+
+    // When history doesn't yet span much time (e.g. right after a reset),
+    // hour-only labels can collide (multiple ticks rounding to the same
+    // hour) — fall back to showing minutes too so labels stay distinct.
+    const hourOnlyLabels = tickIndexes.map(
+      (idx) => new Date(history[idx].time).toLocaleTimeString("en-US", { hour: "numeric" })
+    );
+    const needsMinutes = new Set(hourOnlyLabels).size < tickIndexes.length;
+
+    const ticks = tickIndexes.map((idx, i) => {
       const anchor: "start" | "middle" | "end" = i === 0 ? "start" : i === tickCount - 1 ? "end" : "middle";
       return {
         x: xFor(idx),
         anchor,
-        label: new Date(point.time).toLocaleTimeString("en-US", { hour: "numeric" }),
+        label: needsMinutes
+          ? new Date(history[idx].time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+          : hourOnlyLabels[i],
       };
     });
 
