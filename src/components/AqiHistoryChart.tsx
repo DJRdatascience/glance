@@ -10,6 +10,8 @@ const PADDING_RIGHT = 8;
 const PADDING_TOP = 12;
 const PADDING_BOTTOM = 24;
 const GRID_STEP = 50;
+const WINDOW_MS = 24 * 60 * 60 * 1000;
+const TICK_INTERVALS = 4;
 
 // Muted, cohesive palette — distinct hues at consistent saturation/lightness
 // so categories stay identifiable without the garishness of raw EPA colors.
@@ -43,15 +45,34 @@ export default function AqiHistoryChart({
     const maxAqi = Math.max(...history.map((p) => p.aqi));
     const yMax = Math.max(150, Math.ceil((maxAqi * 1.15) / 50) * 50);
 
-    const xFor = (i: number) => PADDING_LEFT + (i / (history.length - 1 || 1)) * innerWidth;
+    // Anchor the x-axis to a fixed 24-hour window ending at the most recent
+    // reading, positioning points by their actual timestamp rather than by
+    // array index. Index-based positioning stretched sparse/unevenly-sampled
+    // history (e.g. right after a reset, before a full day of polls have
+    // landed) across the full width, which threw off tick label spacing.
+    // Anchoring to real time keeps the axis honest and consistent no matter
+    // how much history exists yet.
+    const endTime = new Date(history[history.length - 1].time).getTime();
+    const startTime = endTime - WINDOW_MS;
+
+    const xFor = (time: number) => {
+      const ratio = (time - startTime) / WINDOW_MS;
+      return PADDING_LEFT + Math.min(Math.max(ratio, 0), 1) * innerWidth;
+    };
     const yFor = (aqi: number) => PADDING_TOP + innerHeight - (Math.min(aqi, yMax) / yMax) * innerHeight;
 
-    const linePoints = history.map((p, i) => `${xFor(i)},${yFor(p.aqi)}`);
+    const points = history.map((p) => ({
+      x: xFor(new Date(p.time).getTime()),
+      y: yFor(p.aqi),
+      category: p.category,
+      color: p.color,
+    }));
+    const linePoints = points.map((p) => `${p.x},${p.y}`);
     const floorY = PADDING_TOP + innerHeight;
     const linePath = `M ${linePoints.join(" L ")}`;
-    const areaPath = `M ${PADDING_LEFT},${floorY} L ${linePoints.join(" L ")} L ${xFor(
-      history.length - 1
-    )},${floorY} Z`;
+    const areaPath = `M ${PADDING_LEFT},${floorY} L ${linePoints.join(" L ")} L ${
+      points[points.length - 1].x
+    },${floorY} Z`;
 
     // Faint reference gridlines at round AQI intervals — structure without noise.
     const gridLines: number[] = [];
@@ -62,40 +83,27 @@ export default function AqiHistoryChart({
     // Color stops sampled from each point's own category — the line (and the
     // wash beneath it) genuinely reflects how conditions changed over the day,
     // rather than tinting the whole chart with just the current reading.
-    const first = xFor(0);
-    const last = xFor(history.length - 1);
-    const span = last - first || 1;
-    const colorStops = history.map((p, i) => ({
-      offset: ((xFor(i) - first) / span) * 100,
+    const colorStops = points.map((p) => ({
+      offset: ((p.x - PADDING_LEFT) / innerWidth) * 100,
       color: CATEGORY_COLORS[p.category] ?? p.color,
     }));
 
-    const tickCount = Math.min(5, history.length);
-    const tickIndexes = Array.from({ length: tickCount }, (_, i) =>
-      Math.round((i / (tickCount - 1 || 1)) * (history.length - 1))
-    );
-
-    // When history doesn't yet span much time (e.g. right after a reset),
-    // hour-only labels can collide (multiple ticks rounding to the same
-    // hour) — fall back to showing minutes too so labels stay distinct.
-    const hourOnlyLabels = tickIndexes.map(
-      (idx) => new Date(history[idx].time).toLocaleTimeString("en-US", { hour: "numeric" })
-    );
-    const needsMinutes = new Set(hourOnlyLabels).size < tickIndexes.length;
-
-    const ticks = tickIndexes.map((idx, i) => {
-      const anchor: "start" | "middle" | "end" = i === 0 ? "start" : i === tickCount - 1 ? "end" : "middle";
+    // Fixed, evenly time-spaced ticks across the full 24-hour window (every
+    // 6 hours) — independent of how much history data has been collected so
+    // far, so the axis always looks the same shape, just with the line only
+    // occupying however much of it is actually backed by data.
+    const ticks = Array.from({ length: TICK_INTERVALS + 1 }, (_, i) => {
+      const t = startTime + (i / TICK_INTERVALS) * WINDOW_MS;
+      const anchor: "start" | "middle" | "end" = i === 0 ? "start" : i === TICK_INTERVALS ? "end" : "middle";
       return {
-        x: xFor(idx),
+        x: xFor(t),
         anchor,
-        label: needsMinutes
-          ? new Date(history[idx].time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-          : hourOnlyLabels[i],
+        label: new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }),
       };
     });
 
     const latest = history[history.length - 1];
-    const endPoint = { x: xFor(history.length - 1), y: yFor(latest.aqi) };
+    const endPoint = points[points.length - 1];
     const endColor = CATEGORY_COLORS[latest.category] ?? latest.color;
 
     return { linePath, areaPath, gridLines, colorStops, ticks, latest, endPoint, endColor, yFor, floorY };
@@ -110,10 +118,10 @@ export default function AqiHistoryChart({
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
-        <p className="text-xl text-white/60">My Sensor — 24 Hour Trend</p>
+        <p className="text-xl text-white/60">Air Quality — 24 Hour Trend</p>
         {updatedAt && (
           <p className="text-sm text-white/40">
-            Updated {new Date(updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+            My Sensor, Updated {new Date(updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
           </p>
         )}
       </div>

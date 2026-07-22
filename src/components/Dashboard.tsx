@@ -65,10 +65,6 @@ export default function Dashboard({ initialData }: { initialData: DashboardSnaps
           <div className="relative flex h-full flex-col divide-y divide-white/10">
             <div className="flex divide-x divide-white/10">
               <div className="relative flex-1 p-8">
-                <div
-                  className="absolute inset-x-8 top-0 h-[3px] rounded-full"
-                  style={{ backgroundColor: accentColor, transition: "background-color 3s ease" }}
-                />
                 <WeatherCard weather={data.weather} />
               </div>
               <div className="w-56 shrink-0 p-6">
@@ -82,10 +78,6 @@ export default function Dashboard({ initialData }: { initialData: DashboardSnaps
             <div className="flex flex-1 divide-x divide-white/10 overflow-hidden">
               <div className="flex w-[380px] shrink-0 flex-col divide-y divide-white/10">
                 <div className="relative flex-1 p-8">
-                  <div
-                    className="absolute inset-x-8 top-0 h-[3px] rounded-full"
-                    style={{ backgroundColor: accentColor, transition: "background-color 3s ease" }}
-                  />
                   <AqiCard
                     title="Air Quality — My Sensor"
                     aqi={data.mySensor?.aqi ?? null}
