@@ -1,0 +1,5 @@
+To do
+-Poll other stations only during fire season
+-Add safe/not-safe to run
+-change poll frequency depending on time/day
+-Night/day dimming
