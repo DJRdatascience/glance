@@ -22,7 +22,13 @@ const CATEGORY_COLORS: Record<string, string> = {
   Hazardous: "#7a4b52",
 };
 
-export default function AqiHistoryChart({ history }: { history: AqiHistoryPoint[] }) {
+export default function AqiHistoryChart({
+  history,
+  updatedAt,
+}: {
+  history: AqiHistoryPoint[];
+  updatedAt?: string | null;
+}) {
   const id = useId();
   const lineGradientId = `${id}-line`;
   const fadeId = `${id}-fade`;
@@ -87,15 +93,17 @@ export default function AqiHistoryChart({ history }: { history: AqiHistoryPoint[
     return <p className="text-white/50">Waiting for history…</p>;
   }
 
-  const { linePath, areaPath, gridLines, colorStops, ticks, latest, endPoint, endColor, yFor, floorY } = chart;
+  const { linePath, areaPath, gridLines, colorStops, ticks, endPoint, endColor, yFor, floorY } = chart;
 
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
         <p className="text-xl text-white/60">My Sensor — 24 Hour Trend</p>
-        <p className="text-sm text-white/40">
-          Latest: {latest.aqi} AQI · {latest.category}
-        </p>
+        {updatedAt && (
+          <p className="text-sm text-white/40">
+            Updated {new Date(updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+          </p>
+        )}
       </div>
 
       <svg

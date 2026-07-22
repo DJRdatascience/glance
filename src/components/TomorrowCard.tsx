@@ -18,7 +18,7 @@ export default function TomorrowCard({ weather }: { weather: WeatherSnapshot | n
       <p className="text-sm text-white/60">Tomorrow · {label}</p>
       <WeatherIcon icon={tomorrow.icon} isDay className="h-12 w-12" />
       <p className="text-lg text-white/70">{tomorrow.condition}</p>
-      <p className="text-2xl font-semibold">
+      <p className="text-2xl font-semibold tracking-tight tabular-nums">
         {Math.round(tomorrow.high)}° <span className="text-white/50">{Math.round(tomorrow.low)}°</span>
       </p>
       {tomorrow.precipitationProbability > 0 && (

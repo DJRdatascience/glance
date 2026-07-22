@@ -69,3 +69,15 @@ export function purpleAirToAqi(rawPm25Cf1: number, humidity: number): AqiResult 
   const { aqi, category, color } = pm25ToAqi(correctedPm25);
   return { correctedPm25, aqi, category, color };
 }
+
+export const AQI_CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  Good: "Air quality is satisfactory, and air pollution poses little or no risk.",
+  Moderate:
+    "Air quality is acceptable. However, there may be a risk for people who are unusually sensitive to air pollution.",
+  "Unhealthy for Sensitive Groups":
+    "Members of sensitive groups may experience health effects. The general public is less likely to be affected.",
+  Unhealthy:
+    "Some members of the general public may experience health effects; sensitive groups may experience more serious effects.",
+  "Very Unhealthy": "Health alert: the risk of health effects is increased for everyone.",
+  Hazardous: "Health warning of emergency conditions: everyone is more likely to be affected.",
+};

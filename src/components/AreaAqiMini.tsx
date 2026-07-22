@@ -15,9 +15,9 @@ export default function AreaAqiMini({ sensorCount, aqi, category, color, error }
       </div>
 
       {aqi != null ? (
-        <div className="flex items-center gap-3">
+        <div key={aqi} className="value-transition flex items-center gap-3">
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums"
             style={{ backgroundColor: color ?? "#666", color: "#111" }}
           >
             {aqi}
