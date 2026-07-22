@@ -29,10 +29,10 @@ export default function Clock({ timezone }: { timezone?: string }) {
 
   return (
     <div className="text-right">
-      <div className="text-7xl font-semibold tracking-tight tabular-nums">
+      <div className="text-8xl font-semibold tracking-tight tabular-nums">
         {timeFormatter.format(now)}
       </div>
-      <div className="text-xl text-white/70">{dateFormatter.format(now)}</div>
+      <div className="text-2xl text-white/70">{dateFormatter.format(now)}</div>
     </div>
   );
 }

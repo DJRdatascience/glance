@@ -14,15 +14,15 @@ export default function TomorrowCard({ weather }: { weather: WeatherSnapshot | n
   });
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3">
-      <p className="text-lg text-white/60">Tomorrow · {label}</p>
-      <WeatherIcon icon={tomorrow.icon} isDay className="h-16 w-16" />
+    <div className="flex h-full flex-col items-center justify-center gap-4">
+      <p className="text-xl text-white/60">Tomorrow · {label}</p>
+      <WeatherIcon icon={tomorrow.icon} isDay className="h-20 w-20" />
       <p className="text-xl text-white/70">{tomorrow.condition}</p>
-      <p className="text-4xl font-semibold tracking-tight tabular-nums">
+      <p className="text-5xl font-semibold tracking-tight tabular-nums">
         {Math.round(tomorrow.high)}° <span className="text-white/50">{Math.round(tomorrow.low)}°</span>
       </p>
       {tomorrow.precipitationProbability > 0 && (
-        <p className="text-base text-white/50">{Math.round(tomorrow.precipitationProbability)}% rain</p>
+        <p className="text-xl text-white/50">{Math.round(tomorrow.precipitationProbability)}% rain</p>
       )}
     </div>
   );

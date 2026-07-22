@@ -8,7 +8,7 @@ const CHART_HEIGHT = 240;
 const PADDING_LEFT = 8;
 const PADDING_RIGHT = 8;
 const PADDING_TOP = 12;
-const PADDING_BOTTOM = 24;
+const PADDING_BOTTOM = 32;
 const GRID_STEP = 50;
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 const TICK_INTERVALS = 4;
@@ -118,9 +118,9 @@ export default function AqiHistoryChart({
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
-        <p className="text-xl text-white/60">Air Quality — 24 Hour Trend</p>
+        <p className="text-2xl text-white/60">Air Quality — 24 Hour Trend</p>
         {updatedAt && (
-          <p className="text-sm text-white/40">
+          <p className="text-xl text-white/40">
             My Sensor, Updated {new Date(updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
           </p>
         )}
@@ -194,11 +194,11 @@ export default function AqiHistoryChart({
         {/* Rendered as HTML rather than SVG <text> so labels don't get
             non-uniformly stretched by the chart's preserveAspectRatio="none"
             scaling. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8">
           {ticks.map((tick, i) => (
             <span
               key={i}
-              className="absolute bottom-0 whitespace-nowrap text-sm text-white/40"
+              className="absolute bottom-0 whitespace-nowrap text-xl text-white/40"
               style={{
                 left: `${(tick.x / CHART_WIDTH) * 100}%`,
                 transform:
