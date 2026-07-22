@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import WeatherCard from "./WeatherCard";
 import AqiCard from "./AqiCard";
+import AreaAqiMini from "./AreaAqiMini";
+import AqiHistoryChart from "./AqiHistoryChart";
 import Clock from "./Clock";
 import type { DashboardSnapshot } from "@/lib/cache";
 
@@ -49,27 +51,30 @@ export default function Dashboard({ initialData }: { initialData: DashboardSnaps
           <Clock timezone={data.weather?.location.timezone} />
         </div>
 
-        <div className="grid flex-1 grid-cols-2 gap-8">
-          <AqiCard
-            title="Air Quality — My Sensor"
-            subtitle={data.mySensor?.name}
-            aqi={data.mySensor?.aqi ?? null}
-            category={data.mySensor?.category ?? null}
-            color={data.mySensor?.color ?? null}
-            pm25={data.mySensor?.correctedPm25 ?? null}
-            updatedAt={data.updatedAt.mySensor}
-            error={data.errors.mySensor}
-          />
-          <AqiCard
-            title="Air Quality — Area Average"
-            subtitle={data.area ? `${data.area.sensorCount} nearby sensors` : undefined}
-            aqi={data.area?.average?.aqi ?? null}
-            category={data.area?.average?.category ?? null}
-            color={data.area?.average?.color ?? null}
-            pm25={data.area?.average?.correctedPm25 ?? null}
-            updatedAt={data.updatedAt.area}
-            error={data.errors.area}
-          />
+        <div className="flex flex-1 gap-8">
+          <div className="flex w-[380px] shrink-0 flex-col gap-6">
+            <AqiCard
+              title="Air Quality — My Sensor"
+              subtitle={data.mySensor?.name}
+              aqi={data.mySensor?.aqi ?? null}
+              category={data.mySensor?.category ?? null}
+              color={data.mySensor?.color ?? null}
+              pm25={data.mySensor?.correctedPm25 ?? null}
+              updatedAt={data.updatedAt.mySensor}
+              error={data.errors.mySensor}
+            />
+            <AreaAqiMini
+              sensorCount={data.area?.sensorCount ?? 0}
+              aqi={data.area?.average?.aqi ?? null}
+              category={data.area?.average?.category ?? null}
+              color={data.area?.average?.color ?? null}
+              error={data.errors.area}
+            />
+          </div>
+
+          <div className="flex-1 rounded-3xl bg-white/5 p-8 backdrop-blur">
+            <AqiHistoryChart history={data.mySensorHistory} />
+          </div>
         </div>
       </div>
     </div>
