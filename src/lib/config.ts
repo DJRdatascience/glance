@@ -18,6 +18,9 @@ export const config = {
     // Placeholder defaults (Indianapolis, IN) — override via env for your location.
     latitude: parseNumber(process.env.DASHBOARD_LAT, 39.7684),
     longitude: parseNumber(process.env.DASHBOARD_LON, -86.1581),
+    // Keep clock-based behavior independent of the server/container timezone.
+    // This is especially important in Docker, which commonly defaults to UTC.
+    timeZone: process.env.DASHBOARD_TIMEZONE ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
   },
   units: {
     temperature: (process.env.DASHBOARD_TEMP_UNIT === "celsius"

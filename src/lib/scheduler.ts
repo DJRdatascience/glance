@@ -124,7 +124,9 @@ export function startBackgroundJobs() {
   scheduleRepeating(pollMySensor, config.intervals.mySensorMs);
   scheduleRepeating(pollArea, config.intervals.areaMs);
 
-  console.log("[scheduler] background jobs started");
+  console.log(
+    `[scheduler] background jobs started (timezone: ${config.location.timeZone}; day/overnight minutes — weather: ${config.intervals.weatherMs / 60_000}/${(config.intervals.weatherMs * 2) / 60_000}, my sensor: ${config.intervals.mySensorMs / 60_000}/${(config.intervals.mySensorMs * 2) / 60_000}, area: ${config.intervals.areaMs / 60_000}/${(config.intervals.areaMs * 2) / 60_000})`,
+  );
 }
 
 // Reschedules itself after every run (rather than a fixed setInterval) so it
@@ -132,10 +134,14 @@ export function startBackgroundJobs() {
 // doubled, halving the poll frequency to reduce API usage while the kiosk
 // is unattended.
 function scheduleRepeating(task: () => void | Promise<void>, baseIntervalMs: number) {
-  const nextDelay = () => (isOvernightHour() ? baseIntervalMs * 2 : baseIntervalMs);
+  const nextDelay = () =>
+    isOvernightHour(new Date(), config.location.timeZone) ? baseIntervalMs * 2 : baseIntervalMs;
 
-  const runAndReschedule = () => {
-    void task();
+  const runAndReschedule = async () => {
+    // Avoid overlapping network requests when an upstream API takes longer
+    // than its configured interval. Re-evaluate the timezone-aware overnight
+    // schedule only after this run has finished.
+    await task();
     setTimeout(runAndReschedule, nextDelay());
   };
 

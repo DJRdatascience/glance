@@ -88,11 +88,11 @@ export default function Dashboard({ initialData }: { initialData: DashboardSnaps
   // Checked independently of the data poll above so the overnight dim
   // reliably kicks in/out on schedule even if data fetches fail.
   useEffect(() => {
-    const update = () => setIsOvernight(isOvernightHour());
+    const update = () => setIsOvernight(isOvernightHour(new Date(), data.weather?.location.timezone));
     update();
     const id = setInterval(update, 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [data.weather?.location.timezone]);
 
   const isNight = data.weather ? !data.weather.current.isDay : false;
   const accentColor = data.mySensor?.color ?? "#38bdf8";
