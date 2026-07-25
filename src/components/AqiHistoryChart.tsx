@@ -9,7 +9,9 @@ const PADDING_LEFT = 8;
 const PADDING_RIGHT = 8;
 const PADDING_TOP = 12;
 const PADDING_BOTTOM = 32;
-const GRID_STEP = 50;
+// EPA AQI category boundaries. These are guides for the health categories,
+// not arbitrary chart intervals, so no non-category grid lines are shown.
+const AQI_CATEGORY_BOUNDARIES = [50, 100, 150, 200, 300, 500];
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 const TICK_INTERVALS = 4;
 
@@ -43,7 +45,12 @@ export default function AqiHistoryChart({
     const innerHeight = CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
 
     const maxAqi = Math.max(...history.map((p) => p.aqi));
-    const yMax = Math.max(150, Math.ceil((maxAqi * 1.15) / 50) * 50);
+    // Include the next AQI category boundary plus a little headroom. For
+    // example, an AQI of 165 shows the 200 boundary instead of clipping it;
+    // high readings naturally extend through 300 and 500 as required.
+    const categoryCeiling =
+      AQI_CATEGORY_BOUNDARIES.find((boundary) => boundary >= maxAqi) ?? Math.ceil(maxAqi / 100) * 100;
+    const yMax = categoryCeiling * 1.05;
 
     // Anchor the x-axis to a fixed 24-hour window ending at the most recent
     // reading, positioning points by their actual timestamp rather than by
@@ -74,19 +81,27 @@ export default function AqiHistoryChart({
       points[points.length - 1].x
     },${floorY} Z`;
 
-    // Faint reference gridlines at round AQI intervals — structure without noise.
-    const gridLines: number[] = [];
-    for (let v = GRID_STEP; v < yMax; v += GRID_STEP) {
-      gridLines.push(v);
-    }
+    // Faint reference gridlines only at the AQI category boundaries.
+    const gridLines = AQI_CATEGORY_BOUNDARIES.filter((boundary) => boundary < yMax);
 
     // Color stops sampled from each point's own category — the line (and the
     // wash beneath it) genuinely reflects how conditions changed over the day,
     // rather than tinting the whole chart with just the current reading.
-    const colorStops = points.map((p) => ({
-      offset: ((p.x - PADDING_LEFT) / innerWidth) * 100,
-      color: CATEGORY_COLORS[p.category] ?? p.color,
-    }));
+    // When the category changes between adjacent points, a duplicate stop is
+    // inserted just before the new color at the old color's offset, so the
+    // gradient snaps over a narrow band instead of blending gradually across
+    // the whole gap between samples.
+    const TRANSITION_SHARPNESS = 2.5; // percent width of the color handoff band
+    const colorStops: { offset: number; color: string }[] = [];
+    points.forEach((p) => {
+      const offset = ((p.x - PADDING_LEFT) / innerWidth) * 100;
+      const color = CATEGORY_COLORS[p.category] ?? p.color;
+      const prev = colorStops[colorStops.length - 1];
+      if (prev && prev.color !== color) {
+        colorStops.push({ offset: Math.max(prev.offset, offset - TRANSITION_SHARPNESS), color: prev.color });
+      }
+      colorStops.push({ offset, color });
+    });
 
     // Fixed, evenly time-spaced ticks across the full 24-hour window (every
     // 6 hours) — independent of how much history data has been collected so

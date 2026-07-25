@@ -3,6 +3,7 @@ import { fetchWeather } from "./openMeteo";
 import { fetchSingleSensor, fetchSensorGroup, estimateCf1TenMinuteAvg } from "./purpleAir";
 import { purpleAirToAqi, pm25ToAqi } from "./aqi";
 import { generateMockAreaReadings, generateMockHistory, generateMockReading } from "./mockData";
+import { isOvernightHour } from "./nightSchedule";
 import * as cache from "./cache";
 
 let started = false;
@@ -119,9 +120,24 @@ export function startBackgroundJobs() {
   void pollMySensor();
   void pollArea();
 
-  setInterval(pollWeather, config.intervals.weatherMs);
-  setInterval(pollMySensor, config.intervals.mySensorMs);
-  setInterval(pollArea, config.intervals.areaMs);
+  scheduleRepeating(pollWeather, config.intervals.weatherMs);
+  scheduleRepeating(pollMySensor, config.intervals.mySensorMs);
+  scheduleRepeating(pollArea, config.intervals.areaMs);
 
   console.log("[scheduler] background jobs started");
+}
+
+// Reschedules itself after every run (rather than a fixed setInterval) so it
+// can re-check the time on each cycle: overnight (10 PM–5 AM) the delay is
+// doubled, halving the poll frequency to reduce API usage while the kiosk
+// is unattended.
+function scheduleRepeating(task: () => void | Promise<void>, baseIntervalMs: number) {
+  const nextDelay = () => (isOvernightHour() ? baseIntervalMs * 2 : baseIntervalMs);
+
+  const runAndReschedule = () => {
+    void task();
+    setTimeout(runAndReschedule, nextDelay());
+  };
+
+  setTimeout(runAndReschedule, nextDelay());
 }

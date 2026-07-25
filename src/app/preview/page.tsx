@@ -8,49 +8,61 @@ const DEVICE_HEIGHT = 1200;
 
 export default function PreviewPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  // Position/scale are computed as plain numbers (not left to flexbox
+  // centering) so this doesn't depend on the host browser's flex/vh-vw
+  // handling — some kiosk WebViews (e.g. Fire OS) have been observed to
+  // distort flex-centered, transform-scaled content.
+  const [box, setBox] = useState({ scale: 1, left: 0, top: 0 });
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    function updateScale(width: number, height: number) {
-      setScale(Math.min(width / DEVICE_WIDTH, height / DEVICE_HEIGHT));
+    function update() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const scale = Math.min(width / DEVICE_WIDTH, height / DEVICE_HEIGHT);
+      setBox({
+        scale,
+        left: (width - DEVICE_WIDTH * scale) / 2,
+        top: (height - DEVICE_HEIGHT * scale) / 2,
+      });
     }
 
-    // ResizeObserver reacts to the container's actual rendered size changing,
-    // regardless of what triggered it (window drag, devtools panel, zoom,
-    // etc.) — more reliable than a window "resize" listener alone.
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      updateScale(width, height);
-    });
-    observer.observe(el);
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
 
-    const rect = el.getBoundingClientRect();
-    updateScale(rect.width, rect.height);
+    // Some kiosk browsers (e.g. Fully Kiosk on Fire OS) settle into true
+    // fullscreen — hiding system bars — a moment after the initial paint,
+    // without firing a resize event. Re-check a few times early on to catch
+    // that late-settling viewport size instead of getting stuck with a
+    // stale, too-small measurement.
+    const retries = [100, 300, 800, 1500, 3000].map((ms) => setTimeout(update, ms));
 
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+      retries.forEach(clearTimeout);
+    };
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="flex h-screen w-screen items-center justify-center gap-4 overflow-hidden bg-black"
-    >
+    <div ref={containerRef} className="fixed inset-0 overflow-hidden bg-black">
       <div
-        style={{ width: DEVICE_WIDTH * scale, height: DEVICE_HEIGHT * scale }}
-        className="relative shrink-0 shadow-2xl shadow-black/60"
+        style={{
+          position: "absolute",
+          left: box.left,
+          top: box.top,
+          width: DEVICE_WIDTH,
+          height: DEVICE_HEIGHT,
+          transform: `scale(${box.scale})`,
+          transformOrigin: "top left",
+        }}
+        className="shadow-2xl shadow-black/60"
       >
-        <div
-          style={{ width: DEVICE_WIDTH, height: DEVICE_HEIGHT, transform: `scale(${scale})`, transformOrigin: "top left" }}
-        >
-          <iframe src="/" width={DEVICE_WIDTH} height={DEVICE_HEIGHT} style={{ border: "none", display: "block" }} title="Fire HD 10 preview" />
-        </div>
+        <iframe src="/" width={DEVICE_WIDTH} height={DEVICE_HEIGHT} style={{ border: "none", display: "block" }} title="Fire HD 10 preview" />
       </div>
 
       <div className="pointer-events-none fixed bottom-3 left-3 rounded bg-white/10 px-2 py-1 font-mono text-xs text-white/50">
-        Fire HD 10 · {DEVICE_WIDTH}×{DEVICE_HEIGHT} · {Math.round(scale * 100)}%
+        Fire HD 10 · {DEVICE_WIDTH}×{DEVICE_HEIGHT} · {Math.round(box.scale * 100)}%
       </div>
     </div>
   );
