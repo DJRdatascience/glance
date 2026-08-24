@@ -16,9 +16,14 @@ export interface AreaAqiSnapshot {
   sensors: SensorAqiSnapshot[];
 }
 
+export interface AqiHistoryPoint extends AqiResult {
+  time: string;
+}
+
 export interface DashboardSnapshot {
   weather: WeatherSnapshot | null;
   mySensor: SensorAqiSnapshot | null;
+  mySensorHistory: AqiHistoryPoint[];
   area: AreaAqiSnapshot | null;
   updatedAt: {
     weather: string | null;
@@ -30,11 +35,18 @@ export interface DashboardSnapshot {
     mySensor: string | null;
     area: string | null;
   };
+  // Tracks whether this snapshot was written while MOCK_DATA was enabled, so
+  // we can detect a mode switch on the next load and avoid graphing synthetic
+  // and real readings together.
+  mockEnabled?: boolean;
 }
+
+const HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const EMPTY_SNAPSHOT: DashboardSnapshot = {
   weather: null,
   mySensor: null,
+  mySensorHistory: [],
   area: null,
   updatedAt: { weather: null, mySensor: null, area: null },
   errors: { weather: null, mySensor: null, area: null },
@@ -69,12 +81,24 @@ function persist() {
 }
 
 export function loadSnapshot() {
+  let snapshot: DashboardSnapshot;
   try {
     const raw = fs.readFileSync(snapshotPath, "utf-8");
-    setSnapshotRef({ ...EMPTY_SNAPSHOT, ...JSON.parse(raw) });
+    snapshot = { ...EMPTY_SNAPSHOT, ...JSON.parse(raw) };
   } catch {
     // No snapshot on disk yet (first run) — keep defaults.
+    snapshot = { ...EMPTY_SNAPSHOT };
   }
+
+  // If MOCK_DATA has changed since this snapshot was last written, the
+  // accumulated history mixes synthetic and real readings — discard it
+  // rather than graphing them together.
+  if (snapshot.mockEnabled !== config.mock.enabled) {
+    snapshot.mySensorHistory = [];
+  }
+  snapshot.mockEnabled = config.mock.enabled;
+
+  setSnapshotRef(snapshot);
 }
 
 export function getSnapshot(): DashboardSnapshot {
@@ -111,6 +135,20 @@ export function setMySensor(mySensor: SensorAqiSnapshot) {
 export function setMySensorError(message: string) {
   const snapshot = getSnapshotRef();
   setSnapshotRef({ ...snapshot, errors: { ...snapshot.errors, mySensor: message } });
+}
+
+export function setMySensorHistory(history: AqiHistoryPoint[]) {
+  const snapshot = getSnapshotRef();
+  setSnapshotRef({ ...snapshot, mySensorHistory: history });
+  persist();
+}
+
+export function appendMySensorHistoryPoint(point: AqiHistoryPoint) {
+  const snapshot = getSnapshotRef();
+  const cutoff = Date.now() - HISTORY_WINDOW_MS;
+  const trimmed = snapshot.mySensorHistory.filter((p) => new Date(p.time).getTime() >= cutoff);
+  setSnapshotRef({ ...snapshot, mySensorHistory: [...trimmed, point] });
+  persist();
 }
 
 export function setArea(area: AreaAqiSnapshot) {

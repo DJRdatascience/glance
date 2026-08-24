@@ -1,51 +1,36 @@
+import { AQI_CATEGORY_DESCRIPTIONS } from "@/lib/aqi";
+
 interface AqiCardProps {
   title: string;
-  subtitle?: string;
   aqi: number | null;
   category: string | null;
   color: string | null;
-  pm25: number | null;
-  updatedAt: string | null;
   error?: string | null;
 }
 
-export default function AqiCard({
-  title,
-  subtitle,
-  aqi,
-  category,
-  color,
-  pm25,
-  updatedAt,
-  error,
-}: AqiCardProps) {
+export default function AqiCard({ title, aqi, category, color, error }: AqiCardProps) {
+  const description = category ? AQI_CATEGORY_DESCRIPTIONS[category] : null;
+
   return (
-    <div className="flex h-full flex-col justify-center gap-6 rounded-3xl bg-white/5 p-10 backdrop-blur">
-      <div>
-        <p className="text-xl text-white/60">{title}</p>
-        {subtitle && <p className="text-sm text-white/40">{subtitle}</p>}
+    <div className="flex h-full flex-col gap-6">
+      <p className="text-2xl text-white/60">{title}</p>
+
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+        {aqi != null ? (
+          <div key={aqi} className="value-transition flex flex-col items-center gap-6">
+            <div
+              className="flex h-44 w-44 shrink-0 items-center justify-center rounded-full text-7xl font-bold tracking-tight tabular-nums"
+              style={{ backgroundColor: color ?? "#666", color: "#111" }}
+            >
+              {aqi}
+            </div>
+            <p className="text-3xl font-semibold leading-tight">{category}</p>
+            {description && <p className="text-lg text-white/50 leading-relaxed">{description}</p>}
+          </div>
+        ) : (
+          <p className="text-2xl text-white/50">{error ?? "Waiting for data…"}</p>
+        )}
       </div>
-
-      {aqi != null ? (
-        <div className="flex items-center gap-10">
-          <div
-            className="flex h-40 w-40 shrink-0 items-center justify-center rounded-full text-6xl font-bold"
-            style={{ backgroundColor: color ?? "#666", color: "#111" }}
-          >
-            {aqi}
-          </div>
-          <div>
-            <p className="text-4xl font-semibold">{category}</p>
-            {pm25 != null && <p className="mt-2 text-xl text-white/60">PM2.5: {pm25.toFixed(1)} µg/m³</p>}
-          </div>
-        </div>
-      ) : (
-        <p className="text-2xl text-white/50">{error ?? "Waiting for data…"}</p>
-      )}
-
-      {updatedAt && (
-        <p className="text-sm text-white/40">Updated {new Date(updatedAt).toLocaleTimeString()}</p>
-      )}
     </div>
   );
 }

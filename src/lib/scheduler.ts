@@ -1,10 +1,13 @@
 import { config } from "./config";
 import { fetchWeather } from "./openMeteo";
-import { fetchSingleSensor, fetchSensorGroup } from "./purpleAir";
+import { fetchSingleSensor, fetchSensorGroup, estimateCf1TenMinuteAvg } from "./purpleAir";
 import { purpleAirToAqi, pm25ToAqi } from "./aqi";
+import { generateMockAreaReadings, generateMockHistory, generateMockReading } from "./mockData";
+import { isOvernightHour } from "./nightSchedule";
 import * as cache from "./cache";
 
 let started = false;
+let mySensorHistorySeeded = false;
 
 async function pollWeather() {
   try {
@@ -17,13 +20,32 @@ async function pollWeather() {
 }
 
 async function pollMySensor() {
+  if (config.mock.enabled) {
+    if (!mySensorHistorySeeded) {
+      const intervalMinutes = Math.max(1, config.intervals.mySensorMs / 60_000);
+      cache.setMySensorHistory(generateMockHistory(24, intervalMinutes));
+      mySensorHistorySeeded = true;
+    }
+
+    const reading = generateMockReading();
+    const aqi = purpleAirToAqi(reading.pm25, reading.humidity);
+    cache.setMySensor({
+      ...aqi,
+      name: reading.name,
+      humidity: reading.humidity,
+      lastSeen: reading.lastSeen,
+    });
+    cache.appendMySensorHistoryPoint({ time: new Date().toISOString(), ...aqi });
+    return;
+  }
+
   const { mySensorIndex } = config.purpleAir;
   if (!mySensorIndex) return;
 
   try {
     const reading = await fetchSingleSensor(mySensorIndex);
     const humidity = reading.humidity ?? 50;
-    const pm25 = reading.pm25_10min ?? reading.pm25 ?? 0;
+    const pm25 = estimateCf1TenMinuteAvg(reading);
     const aqi = purpleAirToAqi(pm25, humidity);
     cache.setMySensor({
       ...aqi,
@@ -31,6 +53,7 @@ async function pollMySensor() {
       humidity: reading.humidity,
       lastSeen: reading.lastSeen,
     });
+    cache.appendMySensorHistoryPoint({ time: new Date().toISOString(), ...aqi });
   } catch (err) {
     console.error("[scheduler] my-sensor poll failed", err);
     cache.setMySensorError(err instanceof Error ? err.message : "Unknown error");
@@ -38,6 +61,22 @@ async function pollMySensor() {
 }
 
 async function pollArea() {
+  if (config.mock.enabled) {
+    const readings = generateMockAreaReadings(3);
+    const sensors = readings.map((r) => {
+      const aqi = purpleAirToAqi(r.pm25, r.humidity);
+      return { ...aqi, name: r.name, humidity: r.humidity, lastSeen: r.lastSeen };
+    });
+    const avgCorrected = sensors.reduce((sum, s) => sum + s.correctedPm25, 0) / sensors.length;
+    const roundedAvg = Math.round(avgCorrected * 10) / 10;
+    cache.setArea({
+      average: { correctedPm25: roundedAvg, ...pm25ToAqi(roundedAvg) },
+      sensorCount: sensors.length,
+      sensors,
+    });
+    return;
+  }
+
   const { areaSensorIndexes } = config.purpleAir;
   if (areaSensorIndexes.length === 0) return;
 
@@ -47,7 +86,7 @@ async function pollArea() {
       .filter((r) => r.pm25 != null)
       .map((r) => {
         const humidity = r.humidity ?? 50;
-        const pm25 = r.pm25_10min ?? r.pm25 ?? 0;
+        const pm25 = estimateCf1TenMinuteAvg(r);
         const aqi = purpleAirToAqi(pm25, humidity);
         return { ...aqi, name: r.name, humidity: r.humidity, lastSeen: r.lastSeen };
       });
@@ -73,13 +112,38 @@ export function startBackgroundJobs() {
 
   cache.loadSnapshot();
 
+  if (config.mock.enabled) {
+    console.log("[scheduler] MOCK_DATA enabled — PurpleAir API calls are disabled");
+  }
+
   void pollWeather();
   void pollMySensor();
   void pollArea();
 
-  setInterval(pollWeather, config.intervals.weatherMs);
-  setInterval(pollMySensor, config.intervals.mySensorMs);
-  setInterval(pollArea, config.intervals.areaMs);
+  scheduleRepeating(pollWeather, config.intervals.weatherMs);
+  scheduleRepeating(pollMySensor, config.intervals.mySensorMs);
+  scheduleRepeating(pollArea, config.intervals.areaMs);
 
-  console.log("[scheduler] background jobs started");
+  console.log(
+    `[scheduler] background jobs started (timezone: ${config.location.timeZone}; day/overnight minutes — weather: ${config.intervals.weatherMs / 60_000}/${(config.intervals.weatherMs * 2) / 60_000}, my sensor: ${config.intervals.mySensorMs / 60_000}/${(config.intervals.mySensorMs * 2) / 60_000}, area: ${config.intervals.areaMs / 60_000}/${(config.intervals.areaMs * 2) / 60_000})`,
+  );
+}
+
+// Reschedules itself after every run (rather than a fixed setInterval) so it
+// can re-check the time on each cycle: overnight (10 PM–5 AM) the delay is
+// doubled, halving the poll frequency to reduce API usage while the kiosk
+// is unattended.
+function scheduleRepeating(task: () => void | Promise<void>, baseIntervalMs: number) {
+  const nextDelay = () =>
+    isOvernightHour(new Date(), config.location.timeZone) ? baseIntervalMs * 2 : baseIntervalMs;
+
+  const runAndReschedule = async () => {
+    // Avoid overlapping network requests when an upstream API takes longer
+    // than its configured interval. Re-evaluate the timezone-aware overnight
+    // schedule only after this run has finished.
+    await task();
+    setTimeout(runAndReschedule, nextDelay());
+  };
+
+  setTimeout(runAndReschedule, nextDelay());
 }

@@ -18,6 +18,9 @@ export const config = {
     // Placeholder defaults (Indianapolis, IN) — override via env for your location.
     latitude: parseNumber(process.env.DASHBOARD_LAT, 39.7684),
     longitude: parseNumber(process.env.DASHBOARD_LON, -86.1581),
+    // Keep clock-based behavior independent of the server/container timezone.
+    // This is especially important in Docker, which commonly defaults to UTC.
+    timeZone: process.env.DASHBOARD_TIMEZONE ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
   },
   units: {
     temperature: (process.env.DASHBOARD_TEMP_UNIT === "celsius"
@@ -37,4 +40,10 @@ export const config = {
     areaMs: parseNumber(process.env.AREA_POLL_INTERVAL_MINUTES, 45) * 60_000,
   },
   snapshotFilePath: process.env.SNAPSHOT_FILE_PATH ?? "data/snapshot.json",
+  mock: {
+    // When true, skip real PurpleAir API calls (weather still uses the free
+    // Open-Meteo API) and generate fake sensor readings/history instead.
+    // Useful while iterating on UI so we don't burn PurpleAir points.
+    enabled: process.env.MOCK_DATA === "true",
+  },
 };

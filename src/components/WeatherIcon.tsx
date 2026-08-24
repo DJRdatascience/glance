@@ -17,6 +17,7 @@ function Sun({ className }: { className?: string }) {
 
   return (
     <svg viewBox="0 0 64 64" className={className} fill="none">
+      <circle cx="32" cy="32" r="19" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1.5" />
       <circle cx="32" cy="32" r="14" fill="currentColor" />
       {rays.map((r, i) => (
         <line
@@ -26,6 +27,7 @@ function Sun({ className }: { className?: string }) {
           x2={r.x2}
           y2={r.y2}
           stroke="currentColor"
+          strokeOpacity="0.6"
           strokeWidth="3"
           strokeLinecap="round"
         />
@@ -46,10 +48,10 @@ function Cloud({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} fill="none">
       <g fill="currentColor">
+        <rect x="16" y="34" width="38" height="16" rx="8" opacity="0.75" />
         <circle cx="24" cy="34" r="12" />
         <circle cx="36" cy="28" r="16" />
-        <circle cx="46" cy="36" r="10" />
-        <rect x="16" y="34" width="38" height="16" rx="8" />
+        <circle cx="46" cy="36" r="10" opacity="0.9" />
       </g>
     </svg>
   );
@@ -63,11 +65,19 @@ function Lightning({ className }: { className?: string }) {
   );
 }
 
-function Drops({ count, color }: { count: number; color: string }) {
+function Drop({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M12 3c-.3 0-.58.13-.77.36C9.62 5.6 5.5 11.02 5.5 14.8a6.5 6.5 0 0 0 13 0c0-3.78-4.12-9.2-5.73-11.44A1 1 0 0 0 12 3z" />
+    </svg>
+  );
+}
+
+function Drops({ count, className }: { count: number; className?: string }) {
   return (
     <div className="absolute bottom-0 left-0 right-0 flex translate-y-1 justify-center gap-2">
       {Array.from({ length: count }, (_, i) => (
-        <span key={i} className={`block h-3 w-1.5 rounded-full ${color}`} />
+        <Drop key={i} className={`h-3 w-3 ${className}`} />
       ))}
     </div>
   );
@@ -116,7 +126,7 @@ export default function WeatherIcon({ icon, isDay = true, className = "h-16 w-16
       return (
         <div className={`relative ${className}`}>
           <Cloud className="text-slate-300 h-full w-full" />
-          <Drops count={3} color="bg-sky-400" />
+          <Drops count={3} className="text-sky-400" />
         </div>
       );
 
