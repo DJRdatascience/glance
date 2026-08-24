@@ -5,11 +5,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 The dashboard runs in Docker via [Colima](https://github.com/abiosoft/colima), which is registered as a `brew services` background job and should start itself on login. If the dashboard isn't reachable after a restart:
 
 ```bash
-brew services start colima   # only needed if it didn't auto-start
-docker compose up -d
+colima start          # start (or resume) the Colima VM
+docker compose up -d --build
 ```
 
 Check it came up with `docker compose ps`, then confirm it's serving with `curl http://localhost:3000`.
+
+> **Note:** `brew services start colima` can fail with `Bootstrap failed: 5:
+> Input/output error` if the launchd service registration is stuck, even
+> though Colima itself is fine. If that happens, just run `colima start`
+> directly (bypassing `brew services`) — it starts the same VM without going
+> through launchd.
 
 ## Self-Hosted Deployment (Docker + Colima)
 
